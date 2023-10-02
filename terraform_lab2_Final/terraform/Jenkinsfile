@@ -1,0 +1,33 @@
+pipeline {
+    agent any
+    parameters {
+        choice(
+            choices: ['dev', 'prod'],
+            description: 'Select the environment',
+            name: 'ENVIRONMENT'
+        )
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                // Checkout your Git repository containing Terraform code
+                checkout scm
+            }
+        }
+        stage('Terraform Apply') {
+            when {
+                expression {
+                    // Only run this stage for the selected environment
+                    params.ENVIRONMENT == 'dev' || params.ENVIRONMENT == 'prod'
+                }
+            }
+            steps {
+                script {
+                    // Run Terraform apply with the selected environment
+                    sh "terraform init -var-file=${params.ENVIRONMENT}.tfvars"
+                    sh "terraform apply -var-file=${params.ENVIRONMENT}.tfvars"
+                }
+            }
+        }
+    }
+}
